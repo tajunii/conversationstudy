@@ -152,12 +152,8 @@ function showAnswer(){
 // ====================
 async function loadCSV(){
     try {
-        // ★ 아래 큰따옴표("") 사이에 복사하신 새 구글 스프레드시트 CSV 링크를 꼭 붙여넣어 주세요! ★
         const csvURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTUWrzsscnZ3sHRvSenqLY4o1c-mkvZLYV9GDTdhjvwkyBI7AYjkIRGFKX3Qjdftb7NL5m6HGnAYwS/pub?gid=619535186&single=true&output=csv";
         
-        // 링크를 안 넣은 상태면 중단
-        if(csvURL === "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTUWrzsscnZ3sHRvSenqLY4o1c-mkvZLYV9GDTdhjvwkyBI7AYjkIRGFKX3Qjdftb7NL5m6HGnAYwS/pub?gid=619535186&single=true&output=csv") return;
-
         const res = await fetch(csvURL);
         const text = await res.text();
         
