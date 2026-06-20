@@ -238,7 +238,7 @@ h1 {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 36px;
-    padding: 10px 10px; /* 패딩을 조금 더 주어 여백 확보 */
+    padding: 60px 40px; /* 패딩을 조금 더 주어 여백 확보 */
     width: 100%;
     box-sizing: border-box;
     border-color: rgba(168, 85, 247, 0.5);
@@ -397,14 +397,4 @@ h1 {
     font-size: 0.5em;
     opacity: 0.5;
     vertical-align: middle;
-}
-
-/* 회화 앱 한글 해석 스타일 추가 */
-.card-meaning {
-    font-size: 24px;              /* 글자 크기 조정 */
-    color: var(--text-secondary); /* 연한 회색 빛 글자색 */
-    line-height: 1.6;             /* 줄간격 넉넉하게 */
-    word-break: keep-all;         /* 한글 단어가 중간에 끊기지 않고 자연스럽게 줄바꿈 */
-    text-align: center;           /* 가운데 정렬 */
-    margin-top: 20px;             /* 일본어 문장과의 간격 */
 }
