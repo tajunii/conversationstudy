@@ -185,3 +185,16 @@ async function loadCSV(){
 
 // 앱 실행 시 데이터 불러오기
 loadCSV();
+
+const homeBtn = document.getElementById("homeBtn");
+
+if (homeBtn) {
+
+    homeBtn.addEventListener("click", () => {
+
+        location.href =
+        "https://tajunii.github.io/study-home/";
+
+    });
+
+}
