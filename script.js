@@ -163,8 +163,8 @@ async function loadCSV(){
         conversationData = rows.map(line => {
             const cols = line.split(",").map(v => v.replace(/"/g,"").trim());
             return {
-                jp: cols[0] || "",
-                ko: cols[1] || ""
+                jp: cols[4] || "",
+                ko: cols[5] || ""
             };
         });
         
