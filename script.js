@@ -13,6 +13,7 @@ const quizPage = document.getElementById("quizPage");
 const statusMessage = document.getElementById("statusMessage");
 
 const typeFilter = document.getElementById("typeFilter");
+const categoryFilter = document.getElementById("categoryFilter");
 const quizBadge = document.getElementById("quizBadge");
 const questionEl = document.getElementById("question");
 const answerEl = document.getElementById("answer");
@@ -45,17 +46,18 @@ if ('speechSynthesis' in window) {
 }
 
 // ====================
-// 필터 자동 생성 로직 (추가된 부분)
+// 필터 자동 생성 로직
 // ====================
 function populateFilters() {
-    const typeFilter = document.getElementById("typeFilter");
-    const categoryFilter = document.getElementById("categoryFilter");
+    // 기존 옵션 초기화 (중복 생성 방지)
+    typeFilter.innerHTML = '<option value="전체">모두 포함</option>';
+    categoryFilter.innerHTML = '<option value="전체">모두 포함</option>';
 
-    // 1. 데이터에서 type과 category만 추출하여 중복 제거 (Set 활용)
+    // 데이터에서 type과 category만 추출하여 중복 제거
     const uniqueTypes = [...new Set(allMasterData.map(item => item.type).filter(Boolean))];
     const uniqueCategories = [...new Set(allMasterData.map(item => item.category).filter(Boolean))];
 
-    // 2. 대분류(Type) 옵션 동적 추가
+    // 대분류 옵션 동적 추가
     uniqueTypes.forEach(t => {
         const option = document.createElement("option");
         option.value = t;
@@ -63,7 +65,7 @@ function populateFilters() {
         typeFilter.appendChild(option);
     });
 
-    // 3. 소분류(Category) 옵션 동적 추가
+    // 소분류 옵션 동적 추가
     uniqueCategories.forEach(c => {
         const option = document.createElement("option");
         option.value = c;
@@ -73,7 +75,7 @@ function populateFilters() {
 }
 
 // ====================
-// CSV 데이터 로드 (수정된 부분)
+// CSV 데이터 로드
 // ====================
 async function loadCSV(){
     try {
@@ -83,7 +85,6 @@ async function loadCSV(){
         const text = await res.text();
         
         const rows = text.trim().split("\n").filter(line => line.trim() !== "");
-        // 사용자가 명시한 실제 헤더(id, type, category, group, cycle, week, jp, kr, audio, meta)를 기준으로 매핑
         const headers = rows[0].split(",").map(v => v.replace(/"/g,"").trim().toLowerCase());
         
         allMasterData = rows.slice(1).map((line, index) => {
@@ -94,18 +95,13 @@ async function loadCSV(){
                 obj[header] = cols[i] || "";
             });
             
-            // 만약 id가 비어있다면 임시 부여
             if (!obj.id) obj.id = index + 1;
-            
-            // LocalStorage 오답 기록 연동
             obj.errorCount = parseInt(localStorage.getItem(`err_${obj.id}`)) || 0;
             
             return obj;
-        });
+        }).filter(item => item.jp && item.kr); // 일본어와 한국어가 비어있는 잘못된 행은 무시
         
-        // 데이터 로딩 완료 후, 필터(드롭다운) 옵션을 자동으로 채움
         populateFilters();
-        
         statusMessage.innerText = `데이터 로딩 완료! (총 ${allMasterData.length}문장)`;
     } catch (e) {
         console.error("데이터 로드 실패:", e);
@@ -114,17 +110,15 @@ async function loadCSV(){
 }
 
 // ====================
-// 퀴즈 로직 (수정된 부분: 다중 조건 필터링)
+// 퀴즈 시작
 // ====================
 function startQuiz() {
-    const selectedType = document.getElementById("typeFilter").value;
-    const selectedCategory = document.getElementById("categoryFilter").value;
+    const selectedType = typeFilter.value;
+    const selectedCategory = categoryFilter.value;
     
-    // Type과 Category 두 가지 조건을 모두 만족하는 데이터만 걸러냄 (AND 조건)
     filteredQuizData = allMasterData.filter(item => {
         const matchType = (selectedType === "전체") || (item.type === selectedType);
         const matchCategory = (selectedCategory === "전체") || (item.category === selectedCategory);
-        
         return matchType && matchCategory;
     });
 
@@ -137,6 +131,40 @@ function startQuiz() {
     quizPage.classList.add("active");
     
     nextQuiz();
+}
+
+// ====================
+// 다음 문제 출제 (새로 추가됨!)
+// ====================
+function nextQuiz() {
+    // 랜덤으로 하나 뽑기
+    currentQuiz = filteredQuizData[Math.floor(Math.random() * filteredQuizData.length)];
+    
+    // 화면에 데이터 뿌리기
+    quizBadge.innerText = `[${currentQuiz.type}] ${currentQuiz.category}`;
+    questionEl.innerText = currentQuiz.kr;
+    
+    // 정답과 버튼 상태 초기화 (숨기기)
+    answerEl.classList.remove("reveal");
+    showAnswerBtn.classList.remove("hide");
+    feedbackControls.classList.remove("show");
+}
+
+// ====================
+// 정답 보기 (새로 추가됨!)
+// ====================
+function showAnswer() {
+    // 일본어와 메타(설명) 데이터 세팅
+    jpTextEl.innerText = currentQuiz.jp;
+    metaTextEl.innerText = currentQuiz.meta ? `💡 Tip: ${currentQuiz.meta}` : "";
+    
+    // 정답 화면 표시 및 버튼 전환
+    answerEl.classList.add("reveal");
+    showAnswerBtn.classList.add("hide");
+    feedbackControls.classList.add("show");
+    
+    // 음성 자동 재생
+    speak(currentQuiz.jp);
 }
 
 // ====================
@@ -155,6 +183,7 @@ function submitFeedback(isCorrect) {
         }
     }
     
+    // 피드백을 누르면 바로 다음 문제로 넘어감
     nextQuiz();
 }
 
