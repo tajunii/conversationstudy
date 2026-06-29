@@ -395,3 +395,26 @@ h1 {
     color: #34d399;
     border: 1px solid rgba(52, 211, 153, 0.3);
 }
+
+/* 다음 문제 버튼을 위한 전용 스타일 정의 */
+.style-next-btn {
+    margin-top: 20px;
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important; /* 초록색 포인트 계열로 다음 단계 암시 */
+    box-shadow: 0 4px 15px rgba(52, 211, 153, 0.2) !important;
+}
+
+.style-next-btn:hover {
+    box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4) !important;
+}
+
+/* 상단 우측 주차 셀렉트 박스 스타일 패딩 및 크기 미세 조정 */
+header .custom-select {
+    width: auto;
+    min-width: 140px;
+    padding: 10px 15px;
+    border-radius: 50px; /* 라운드 처리로 헤더 네비게이션과 통일 */
+    background: #181630;
+    border: 1px solid var(--card-border);
+    font-size: 15px;
+    font-weight: 600;
+}

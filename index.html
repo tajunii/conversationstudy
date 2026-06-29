@@ -11,62 +11,34 @@
 <header>
     <h1>일본어 회화 퀴즈</h1>
     <div class="header-right">
-        <div id="nav">
-            <button id="homeBtn" title="메인 화면"> 🏠 </button>
-            <button class="active-nav">퀴즈 모드</button>
-        </div>
+        <!-- 주차(Week) 선택 메뉴 버튼 -->
+        <select id="weekFilter" class="custom-select" onchange="changeWeekFilter()">
+            <option value="전체">전체 주차</option>
+        </select>
     </div>
 </header>
 
 <main class="container">
-    <div id="setupPage" class="page active">
-        <div class="welcome-section">
-            <h2>어떤 상황의 회화를 연습할까요?</h2>
-            <p>원하는 카테고리를 선택해 주세요.</p>
-        </div>
-        
-        <div class="filter-container">
-            <div class="filter-group">
-                <label>대분류 (Type)</label>
-                <select id="typeFilter" class="custom-select">
-                    <option value="전체">모두 포함</option>
-                    </select>
-            </div>
-            
-            <div class="filter-group">
-                <label>소분류 (Category)</label>
-                <select id="categoryFilter" class="custom-select">
-                    <option value="전체">모두 포함</option>
-                    </select>
-            </div>
-            
-            <button class="start-btn" onclick="startQuiz()">퀴즈 시작하기 →</button>
-        </div>
-
-        <div id="statusMessage" style="margin-top:20px; color:var(--text-secondary);">데이터를 불러오는 중...</div>
-    </div>
-
-    <div id="quizPage" class="page">
+    <div id="quizPage" class="page active">
         <div class="quiz-container">
             <div class="quiz-header">
-                <span id="quizBadge" class="badge">카테고리</span>
+                <span id="quizBadge" class="badge">로딩 중...</span>
             </div>
             
-            <div id="question">질문이 여기에 표시됩니다.</div>
+            <!-- 한글 문제 표시 영역 -->
+            <div id="question">데이터를 불러오는 중입니다...</div>
 
+            <!-- 정답 보기 버튼 -->
             <button id="showAnswerBtn" class="quiz-action-btn" onclick="showAnswer()">정답 보기</button>
 
+            <!-- 정답 표시 영역 -->
             <div id="answer">
                 <div id="jpText" class="tts-clickable" onclick="speak(document.getElementById('jpText').innerText)">일본어 정답</div>
                 <div id="metaText" class="meta-info">문법 설명 및 팁</div>
             </div>
 
-            <div id="feedbackControls" class="feedback-container">
-                <button class="feedback-btn wrong" onclick="submitFeedback(false)">❌ 몰랐어요</button>
-                <button class="feedback-btn correct" onclick="submitFeedback(true)">⭕ 알았어요</button>
-            </div>
-            
-            <button class="quiz-nav-btn" onclick="goToSetup()">← 설정으로 돌아가기</button>
+            <!-- 다음 문제 버튼 -->
+            <button id="nextQuestionBtn" class="start-btn style-next-btn" style="display:none;" onclick="nextQuiz()">다음 문제 →</button>
         </div>
     </div>
 </main>
