@@ -38,9 +38,26 @@ function speak(text, lang = 'ja-JP') { //[cite: 2]
 // CSV 파싱 규칙 (구글 시트 쉼표 우회 처리)
 // ====================
 function parseCSVLine(line) {
-    // 큰따옴표 안의 쉼표는 분리하지 않는 정규식 패턴 적용
-    const matches = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$|\s*)/g) || [];
-    return matches.map(v => v.replace(/^"|"$/g, "").trim());
+    let result = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+
+        if (c === '"') {
+            inQuotes = !inQuotes;
+        } else if (c === "," && !inQuotes) {
+            result.push(current);
+            current = "";
+        } else {
+            current += c;
+        }
+    }
+
+    result.push(current);
+
+    return result.map(v => v.trim());
 }
 
 // ====================
@@ -62,7 +79,9 @@ async function loadCSV(){
         const rows = cleanText.split(/\r?\n/).filter(line => line.trim() !== "");
         
         // [수정됨] 헤더 및 데이터의 양옆 공백(스페이스바)을 제거(.trim())하여 인식 오류 방지
-        const headers = parseCSVLine(rows[0]).map(v => v.toLowerCase().trim());
+        const headers = parseCSVLine(rows[0]).map(v =>
+            v.replace(/^\uFEFF/, "").toLowerCase().trim()
+        );
         
         allMasterData = rows.slice(1).map((line, index) => { 
             const cols = parseCSVLine(line);
@@ -75,6 +94,7 @@ async function loadCSV(){
             if (!obj.id) obj.id = index + 1; 
             return obj;
         }).filter(item => item.jp && item.kr); // 양쪽 열에 데이터가 있는 경우만 저장
+        console.log("데이터:", allMasterData);
         
         populateWeekFilter();
         startQuiz(); 
@@ -110,7 +130,11 @@ function startQuiz() {
     
     // 선택된 주차 데이터만 필터링
     filteredQuizData = allMasterData.filter(item => {
-        return (selectedWeek === "전체") || (item.week === selectedWeek);
+
+    if (selectedWeek === "전체") return true;
+
+    return String(item.week).trim() === String(selectedWeek).trim();
+
     });
 
     if (filteredQuizData.length === 0) {
