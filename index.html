@@ -38,8 +38,10 @@
             <button id="showAnswerBtn" class="quiz-action-btn" onclick="showAnswer()">정답 보기</button>
 
             <!-- 정답 표시 영역 -->
-            <div id="answer">
-                <div id="jpText" class="tts-clickable" onclick="speak(document.getElementById('jpText').innerText)">일본어 정답</div>
+            <!-- 정답 표시 영역 중 jpText 부분 수정 -->
+            <div id="answer"> 
+            <!-- 변경된 부분: onclick="playAudio()" -->
+                <div id="jpText" class="tts-clickable" onclick="playAudio()">일본어 정답</div>
                 <div id="metaText" class="meta-info">문법 설명 및 팁</div>
             </div>
 

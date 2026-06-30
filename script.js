@@ -20,18 +20,38 @@ const showAnswerBtn = document.getElementById("showAnswerBtn"); //[cite: 2]
 const nextQuestionBtn = document.getElementById("nextQuestionBtn");
 
 // ====================
-// TTS (음성 합성)[cite: 2]
+// GitHub 오디오 파일 재생
 // ====================
-function speak(text, lang = 'ja-JP') { //[cite: 2]
-    if ('speechSynthesis' in window) { //[cite: 2]
-        window.speechSynthesis.cancel();  //[cite: 2]
-        const utterance = new SpeechSynthesisUtterance(text); //[cite: 2]
-        utterance.lang = lang; //[cite: 2]
-        const voices = window.speechSynthesis.getVoices(); //[cite: 2]
-        const jpVoice = voices.find(v => v.lang.includes('ja-JP') || v.lang.includes('ja_JP')); //[cite: 2]
-        if (jpVoice) utterance.voice = jpVoice; //[cite: 2]
-        window.speechSynthesis.speak(utterance); //[cite: 2]
+let currentAudio = null; // 현재 재생 중인 오디오 객체 보관용
+
+function playAudio() {
+    if (!currentQuiz) return;
+
+    // 새 오디오를 재생하기 전에 기존 오디오 중지 및 초기화
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
     }
+
+    // CSV 데이터의 'audio' 열 값(예: 0001.mp3)을 그대로 가져옴
+    const fileName = currentQuiz.audio;
+    
+    // 오디오 파일명이 비어있는 경우 예외 처리
+    if (!fileName) {
+        console.warn("오디오 파일명이 지정되지 않았습니다.");
+        return;
+    }
+
+    // GitHub Raw URL 경로 조합
+    const audioUrl = `https://raw.githubusercontent.com/tajunii/conversationstudy/main/audio/${fileName}`;
+
+    currentAudio = new Audio(audioUrl);
+    
+    // 오디오 재생 및 에러 처리
+    currentAudio.play().catch(error => {
+        console.error("음성 파일 재생 실패:", error);
+        alert(`음성 파일(${fileName})을 찾을 수 없거나 재생할 수 없습니다.`);
+    });
 }
 
 // ====================
@@ -185,19 +205,19 @@ function nextQuiz() {
 }
 
 // ====================
-// 정답 보기[cite: 2]
+// 정답 보기
 // ====================
-function showAnswer() { //[cite: 2]
-    jpTextEl.innerText = currentQuiz.jp; //[cite: 2]
-    metaTextEl.innerText = currentQuiz.meta ? `💡 Tip: ${currentQuiz.meta}` : ""; //[cite: 2]
+function showAnswer() { 
+    jpTextEl.innerText = currentQuiz.jp; 
+    metaTextEl.innerText = currentQuiz.meta ? `💡 Tip: ${currentQuiz.meta}` : ""; 
     
-    answerEl.classList.add("reveal"); //[cite: 2]
+    answerEl.classList.add("reveal"); 
     showAnswerBtn.style.display = "none";
     nextQuestionBtn.style.display = "block";
     
-    speak(currentQuiz.jp); // 음성 재생[cite: 2]
+    // 변경된 부분: 기존 speak(currentQuiz.jp) 대신 playAudio() 호출
+    playAudio(); 
     
-    // 다음 문제 준비를 위해 인덱스 1 증가
     currentIndex++;
 }
 
