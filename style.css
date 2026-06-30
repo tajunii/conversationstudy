@@ -418,3 +418,43 @@ header .custom-select {
     font-size: 15px;
     font-weight: 600;
 }
+
+/* 상단 헤더 3분할 레이아웃 적용 */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 10px 20px;
+    box-sizing: border-box;
+}
+
+/* 왼쪽 끝과 오른쪽 끝의 공간을 동일하게 설정해 제목을 정중앙에 고정 */
+.header-left, .header-right {
+    flex: 1; 
+}
+
+.header-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.app-header h1 {
+    flex: 2;
+    text-align: center;
+    margin: 0;
+}
+
+/* 홈 버튼 스타일 */
+.home-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.2s;
+}
+
+.home-btn:hover {
+    transform: scale(1.1);
+}

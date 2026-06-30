@@ -46,33 +46,40 @@ function parseCSVLine(line) {
 // ====================
 // CSV 데이터 로드[cite: 2]
 // ====================
-async function loadCSV(){ //[cite: 2]
+// ====================
+// CSV 데이터 로드
+// ====================
+async function loadCSV(){ 
     try {
-        const csvURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTUWrzsscnZ3sHRvSenqLY4o1c-mkvZLYV9GDTdhjvwkyBI7AYjkIRGFKX3Qjdftb7NL5m6HGnAYwS/pub?gid=619535186&single=true&output=csv"; //[cite: 2]
+        const csvURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTUWrzsscnZ3sHRvSenqLY4o1c-mkvZLYV9GDTdhjvwkyBI7AYjkIRGFKX3Qjdftb7NL5m6HGnAYwS/pub?gid=619535186&single=true&output=csv"; 
         
-        const res = await fetch(csvURL); //[cite: 2]
-        const text = await res.text(); //[cite: 2]
+        const res = await fetch(csvURL); 
+        const text = await res.text(); 
         
-        const rows = text.split(/\r?\n/).filter(line => line.trim() !== "");
-        // 헤더 추출[cite: 2]
-        const headers = parseCSVLine(rows[0]).map(v => v.toLowerCase());
+        // [수정됨] 구글 시트 데이터 추출 시 섞여 들어오는 BOM(보이지 않는 특수문자) 완벽 제거
+        const cleanText = text.replace(/^\uFEFF/, '');
         
-        allMasterData = rows.slice(1).map((line, index) => { //[cite: 2]
+        const rows = cleanText.split(/\r?\n/).filter(line => line.trim() !== "");
+        
+        // [수정됨] 헤더 및 데이터의 양옆 공백(스페이스바)을 제거(.trim())하여 인식 오류 방지
+        const headers = parseCSVLine(rows[0]).map(v => v.toLowerCase().trim());
+        
+        allMasterData = rows.slice(1).map((line, index) => { 
             const cols = parseCSVLine(line);
             let obj = {}; 
             
             headers.forEach((header, i) => {
-                obj[header] = cols[i] || "";
+                obj[header] = (cols[i] || "").trim();
             });
             
-            if (!obj.id) obj.id = index + 1; //[cite: 2]
+            if (!obj.id) obj.id = index + 1; 
             return obj;
-        }).filter(item => item.jp && item.kr); // 필수 데이터 필터링[cite: 2]
+        }).filter(item => item.jp && item.kr); // 양쪽 열에 데이터가 있는 경우만 저장
         
         populateWeekFilter();
         startQuiz(); 
     } catch (e) {
-        console.error("데이터 로드 실패:", e); //[cite: 2]
+        console.error("데이터 로드 실패:", e); 
         questionEl.innerText = "데이터를 불러오는 데 실패했습니다.";
     }
 }

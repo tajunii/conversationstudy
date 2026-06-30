@@ -8,10 +8,16 @@
 </head>
 <body>
 
-<header>
+<header class="app-header">
+    <div class="header-left">
+        <button class="home-btn" onclick="location.reload()" title="홈으로">
+            🏠
+        </button>
+    </div>
+    
     <h1>일본어 회화 퀴즈</h1>
+    
     <div class="header-right">
-        <!-- 주차(Week) 선택 메뉴 버튼 -->
         <select id="weekFilter" class="custom-select" onchange="changeWeekFilter()">
             <option value="전체">전체 주차</option>
         </select>
