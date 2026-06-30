@@ -179,3 +179,16 @@ function showAnswer() { //[cite: 2]
 
 // 앱 실행 시 자동 로드
 loadCSV();
+
+const homeBtn = document.getElementById("homeBtn");
+
+if (homeBtn) {
+
+    homeBtn.addEventListener("click", () => {
+
+        location.href =
+        "https://tajunii.github.io/study-home/";
+
+    });
+
+}
