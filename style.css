@@ -446,7 +446,7 @@ header .custom-select {
 }
 
 /* 홈 버튼 스타일 */
-.home-btn {
+.homebtn {
     background: none;
     border: none;
     font-size: 24px;
@@ -455,6 +455,6 @@ header .custom-select {
     transition: transform 0.2s;
 }
 
-.home-btn:hover {
+.homebtn:hover {
     transform: scale(1.1);
 }
