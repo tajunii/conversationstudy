@@ -11,7 +11,6 @@ let currentQuiz = null;    //[cite: 2]
 // ====================
 const quizPage = document.getElementById("quizPage"); //[cite: 2]
 const weekFilter = document.getElementById("weekFilter");
-const quizBadge = document.getElementById("quizBadge"); //[cite: 2]
 const questionEl = document.getElementById("question"); //[cite: 2]
 const answerEl = document.getElementById("answer"); //[cite: 2]
 const jpTextEl = document.getElementById("jpText"); //[cite: 2]
@@ -194,8 +193,6 @@ function nextQuiz() {
     currentQuiz = filteredQuizData[currentIndex];
     
     // UI 업데이트
-    const weekLabel = currentQuiz.week ? (String(currentQuiz.week).includes("주차") ? currentQuiz.week : `${currentQuiz.week}주차`) : "일반";
-    quizBadge.innerText = `[${weekLabel}] ${currentQuiz.type || ''} ${currentQuiz.category || ''}`.trim(); //[cite: 2]
     questionEl.innerText = currentQuiz.kr; //[cite: 2]
     
     // 초기 노출 상태 세팅[cite: 2]
