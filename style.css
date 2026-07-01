@@ -629,7 +629,7 @@ header .custom-select {
 #evaluationButtons {
     display: flex !important;   /* 가로 정렬 */
     justify-content: center;    /* 가운데 정렬 */
-    gap: 16px;                  /* 💡 버튼 사이의 간격 (마진 대신 사용) */
+    gap: 25px;                  /* 💡 버튼 사이의 간격 (마진 대신 사용) */
     margin-top: 25px;           /* 정답 영역과의 상단 여백 */
     width: 100%;
 }
