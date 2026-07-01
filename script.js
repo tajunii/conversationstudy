@@ -188,11 +188,18 @@ function nextQuiz() {
 
 function updateMasteryRate() {
     if(filteredQuizData.length === 0) return;
-    // '풀어본 기록이 있고(userScores에 존재)', '현재 점수가 0'인 문제만 마스터로 인정
+    
+    // 점수가 0인(기록이 있고 완전히 맞춘) 문제 개수 계산
     const masterCount = filteredQuizData.filter(item =>
         userScores[item.id] !== undefined && userScores[item.id] === 0
     ).length;
-    progressText.innerText = `마스터 🎯: ${masterCount} / ${filteredQuizData.length}`;
+
+    // 현재 진행 모드 안내
+    const modeBadge = isReviewPhase 
+        ? `오답 복습 중 [${currentIndex + 1}/${currentRoundPool.length}]` 
+        : `전체 1회독 중 [${currentIndex + 1}/${currentRoundPool.length}]`;
+
+    progressText.innerText = `마스터: ${masterCount} / ${filteredQuizData.length}  |  ${modeBadge}`;
 }
 
 function showAnswer() { 
@@ -208,25 +215,23 @@ function showAnswer() {
 // 평가 및 점수 업데이트
 // ====================
 function evaluateAnswer(type) {
-    let currentScore = getScore(currentQuiz.id);
-    
     if (type === 'perfect') {
-        currentScore -= 2;
-    } else if (type === 'slow') {
-        currentScore += 1;
-    } else if (type === 'wrong') {
-        currentScore += 3;
+        userScores[currentQuiz.id] = 0; // 완벽히 맞춤 -> 마스터(0) 기록
+    } else if (type === 'retry') {
+        userScores[currentQuiz.id] = 1; // 틀렸거나 오래 걸림 -> 복습 필요(1) 기록
     }
     
-    setScore(currentQuiz.id, currentScore);
-    nextQuiz(); // 바로 다음 문제로 이동
+    saveScores();
+    
+    // 다음 문제로 이동
+    currentIndex++; 
+    nextQuiz(); 
 }
 
 // ====================
 // 단축키 지원 (편의성 극대화)
 // ====================
 document.addEventListener("keydown", (e) => {
-    // 입력창 등에 포커스 되어 있을 땐 무시
     if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
     if (e.code === "Space" || e.code === "Enter") {
@@ -235,13 +240,10 @@ document.addEventListener("keydown", (e) => {
             showAnswer();
         }
     } else if (evaluationButtons.style.display !== "none") {
-        // 정답이 표시되어 평가 버튼이 활성화된 상태일 때만 숫자 단축키 작동
         if (e.code === "Digit1" || e.code === "Numpad1") {
             evaluateAnswer('perfect');
         } else if (e.code === "Digit2" || e.code === "Numpad2") {
-            evaluateAnswer('slow');
-        } else if (e.code === "Digit3" || e.code === "Numpad3") {
-            evaluateAnswer('wrong');
+            evaluateAnswer('retry');
         }
     }
 });

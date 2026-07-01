@@ -44,17 +44,14 @@
                 <div id="metaText" class="meta-info">문법 설명 및 팁</div>
             </div>
 
-            <div id="evaluationButtons" class="evaluation-container" style="display:none;">
-                <button class="eval-btn perfect" onclick="evaluateAnswer('perfect')">
-                    😊 바로 맞춤 <span class="shortcut-key">(1)</span>
-                </button>
-                <button class="eval-btn slow" onclick="evaluateAnswer('slow')">
-                    🤔 늦게 맞춤 <span class="shortcut-key">(2)</span>
-                </button>
-                <button class="eval-btn wrong" onclick="evaluateAnswer('wrong')">
-                    ❌ 틀림 <span class="shortcut-key">(3)</span>
-                </button>
-            </div>
+            <div id="evaluationButtons" style="display: none;">
+    <button class="eval-btn perfect" onclick="evaluateAnswer('perfect')">
+        😊 바로 맞춤 <span class="shortcut-key">[1]</span>
+    </button>
+    <button class="eval-btn retry" onclick="evaluateAnswer('retry')">
+        ❌ 다시 보기 <span class="shortcut-key">[2]</span>
+    </button>
+</div>
         </div>
     </div>
 </main>
