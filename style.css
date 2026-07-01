@@ -458,3 +458,74 @@ header .custom-select {
 .homebtn:hover {
     transform: scale(1.1);
 }
+
+/* =========================================
+   새로 추가된 컨트롤 패널 (진행률 및 초기화)
+========================================= */
+.quiz-controls-panel {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.progress-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #34d399; /* 진행 상태는 눈에 띄는 초록색 */
+    background: rgba(52, 211, 153, 0.1);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.control-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.control-btn.highlight {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #c084fc;
+}
+
+.control-btn.highlight:hover {
+    background: rgba(168, 85, 247, 0.3);
+    color: #f8fafc;
+}
+
+/* 필터 영역 모바일/작은 화면 대응 */
+.header-right {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* 창이 좁아지면 아래로 내려가게 처리 */
+}
+
+@media (max-width: 768px) {
+    .quiz-controls-panel {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+}

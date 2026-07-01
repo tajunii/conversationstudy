@@ -18,31 +18,36 @@
     <h1>일본어 회화 퀴즈</h1>
     
     <div class="header-right">
-        <select id="weekFilter" class="custom-select" onchange="changeWeekFilter()">
-            <option value="전체">전체 주차</option>
+        <select id="categoryFilter" class="custom-select" onchange="changeFilter()">
+            <option value="전체">카테고리 전체</option>
+        </select>
+        <select id="cycleFilter" class="custom-select" onchange="changeFilter()">
+            <option value="전체">학습주기 전체</option>
         </select>
     </div>
 </header>
 
 <main class="container">
     <div id="quizPage" class="page active">
+        <div class="quiz-controls-panel">
+            <span id="progressText" class="progress-text">로딩 중...</span>
+            <div class="action-buttons">
+                <button onclick="restartQuiz(false)" class="control-btn" title="선택한 범위를 1번부터 차례대로 다시 시작합니다">처음부터 (순차)</button>
+                <button onclick="restartQuiz(true)" class="control-btn highlight" title="선택한 범위를 무작위로 섞어서 다시 시작합니다">랜덤 섞기</button>
+            </div>
+        </div>
+
         <div class="quiz-container">
-            <!-- 한글 문제 표시 영역 -->
             <div id="question">데이터를 불러오는 중입니다...</div>
 
-            <!-- 정답 보기 버튼 -->
-            <button id="showAnswerBtn" class="quiz-action-btn" onclick="showAnswer()">정답 보기</button>
+            <button id="showAnswerBtn" class="quiz-action-btn" onclick="showAnswer()">정답 보기 (Space)</button>
 
-            <!-- 정답 표시 영역 -->
-            <!-- 정답 표시 영역 중 jpText 부분 수정 -->
             <div id="answer"> 
-            <!-- 변경된 부분: onclick="playAudio()" -->
                 <div id="jpText" class="tts-clickable" onclick="playAudio()">일본어 정답</div>
                 <div id="metaText" class="meta-info">문법 설명 및 팁</div>
             </div>
 
-            <!-- 다음 문제 버튼 -->
-            <button id="nextQuestionBtn" class="start-btn style-next-btn" style="display:none;" onclick="nextQuiz()">다음 문제 →</button>
+            <button id="nextQuestionBtn" class="start-btn style-next-btn" style="display:none;" onclick="nextQuiz()">다음 문제 → (Enter)</button>
         </div>
     </div>
 </main>

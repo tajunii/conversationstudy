@@ -1,204 +1,236 @@
 // ====================
-// 전역 변수[cite: 2]
+// 전역 변수
 // ====================
 let allMasterData = []; 
-let filteredQuizData = []; // 현재 필터링된 퀴즈 배열[cite: 2]
-let currentIndex = 0;      // 순차 출제를 위한 인덱스 카운터
-let currentQuiz = null;    //[cite: 2]
+let filteredQuizData = []; 
+let currentIndex = 0;      
+let currentQuiz = null;    
 
 // ====================
-// DOM 요소[cite: 2]
+// DOM 요소
 // ====================
-const quizPage = document.getElementById("quizPage"); //[cite: 2]
-const weekFilter = document.getElementById("weekFilter");
-const questionEl = document.getElementById("question"); //[cite: 2]
-const answerEl = document.getElementById("answer"); //[cite: 2]
-const jpTextEl = document.getElementById("jpText"); //[cite: 2]
-const metaTextEl = document.getElementById("metaText"); //[cite: 2]
-const showAnswerBtn = document.getElementById("showAnswerBtn"); //[cite: 2]
+const categoryFilter = document.getElementById("categoryFilter");
+const cycleFilter = document.getElementById("cycleFilter");
+const questionEl = document.getElementById("question"); 
+const answerEl = document.getElementById("answer"); 
+const jpTextEl = document.getElementById("jpText"); 
+const metaTextEl = document.getElementById("metaText"); 
+const showAnswerBtn = document.getElementById("showAnswerBtn"); 
 const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+const progressText = document.getElementById("progressText"); // 신규
+
+// ====================
+// 로컬 스토리지 (진행률 저장)
+// ====================
+function saveProgress() {
+    if (filteredQuizData.length === 0) return;
+    
+    const state = {
+        category: categoryFilter.value,
+        cycle: cycleFilter.value,
+        orderIds: filteredQuizData.map(item => item.id), // 현재 섞여있는 문제 ID 순서 저장
+        currentIndex: currentIndex
+    };
+    localStorage.setItem("quizProgressState", JSON.stringify(state));
+}
+
+function loadProgress() {
+    const saved = localStorage.getItem("quizProgressState");
+    if (saved) return JSON.parse(saved);
+    return null;
+}
 
 // ====================
 // GitHub 오디오 파일 재생
 // ====================
-let currentAudio = null; // 현재 재생 중인 오디오 객체 보관용
+let currentAudio = null; 
 
 function playAudio() {
     if (!currentQuiz) return;
 
-    // 새 오디오를 재생하기 전에 기존 오디오 중지 및 초기화
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
     }
 
-    // CSV 데이터의 'audio' 열 값(예: 0001.mp3)을 그대로 가져옴
     const fileName = currentQuiz.audio;
-    
-    // 오디오 파일명이 비어있는 경우 예외 처리
-    if (!fileName) {
-        console.warn("오디오 파일명이 지정되지 않았습니다.");
-        return;
-    }
+    if (!fileName) return;
 
-    // GitHub Raw URL 경로 조합
     const audioUrl = `https://raw.githubusercontent.com/tajunii/conversationstudy/main/audio/${fileName}`;
-
     currentAudio = new Audio(audioUrl);
     
-    // 오디오 재생 및 에러 처리
-    currentAudio.play().catch(error => {
-        console.error("음성 파일 재생 실패:", error);
-        alert(`음성 파일(${fileName})을 찾을 수 없거나 재생할 수 없습니다.`);
-    });
+    currentAudio.play().catch(error => console.error("음성 파일 재생 실패:", error));
 }
 
 // ====================
-// CSV 파싱 규칙 (구글 시트 쉼표 우회 처리)
+// CSV 파싱 규칙
 // ====================
 function parseCSVLine(line) {
     let result = [];
     let current = "";
     let inQuotes = false;
-
     for (let i = 0; i < line.length; i++) {
         const c = line[i];
-
-        if (c === '"') {
-            inQuotes = !inQuotes;
-        } else if (c === "," && !inQuotes) {
-            result.push(current);
-            current = "";
-        } else {
-            current += c;
-        }
+        if (c === '"') inQuotes = !inQuotes;
+        else if (c === "," && !inQuotes) { result.push(current); current = ""; } 
+        else { current += c; }
     }
-
     result.push(current);
-
     return result.map(v => v.trim());
 }
 
-// ====================
-// CSV 데이터 로드[cite: 2]
-// ====================
 // ====================
 // CSV 데이터 로드
 // ====================
 async function loadCSV(){ 
     try {
         const csvURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTUWrzsscnZ3sHRvSenqLY4o1c-mkvZLYV9GDTdhjvwkyBI7AYjkIRGFKX3Qjdftb7NL5m6HGnAYwS/pub?gid=619535186&single=true&output=csv"; 
-        
         const res = await fetch(csvURL); 
         const text = await res.text(); 
         
-        // [수정됨] 구글 시트 데이터 추출 시 섞여 들어오는 BOM(보이지 않는 특수문자) 완벽 제거
         const cleanText = text.replace(/^\uFEFF/, '');
-        
         const rows = cleanText.split(/\r?\n/).filter(line => line.trim() !== "");
         
-        // [수정됨] 헤더 및 데이터의 양옆 공백(스페이스바)을 제거(.trim())하여 인식 오류 방지
-        const headers = parseCSVLine(rows[0]).map(v =>
-            v.replace(/^\uFEFF/, "").toLowerCase().trim()
-        );
+        const headers = parseCSVLine(rows[0]).map(v => v.replace(/^\uFEFF/, "").toLowerCase().trim());
         
         allMasterData = rows.slice(1).map((line, index) => { 
             const cols = parseCSVLine(line);
             let obj = {}; 
-            
-            headers.forEach((header, i) => {
-                obj[header] = (cols[i] || "").trim();
-            });
-            
-            if (!obj.id) obj.id = index + 1; 
+            headers.forEach((header, i) => { obj[header] = (cols[i] || "").trim(); });
+            if (!obj.id) obj.id = String(index + 1); 
             return obj;
-        }).filter(item => item.jp && item.kr); // 양쪽 열에 데이터가 있는 경우만 저장
-        console.log("데이터:", allMasterData);
+        }).filter(item => item.jp && item.kr);
         
-        populateWeekFilter();
-        startQuiz(); 
+        populateFilters();
+        initializeFromSavedStateOrStart(); 
     } catch (e) {
-        console.error("데이터 로드 실패:", e); 
         questionEl.innerText = "데이터를 불러오는 데 실패했습니다.";
     }
 }
 
 // ====================
-// 주차(Week) 필터 생성
+// 다중 필터 생성 (카테고리 & 학습주기)
 // ====================
-function populateWeekFilter() {
-    weekFilter.innerHTML = '<option value="전체">전체 주차</option>';
-    
-    // 데이터 내 week 열의 중복 없는 유일값 추출
-    const uniqueWeeks = [...new Set(allMasterData.map(item => item.week).filter(Boolean))];
-    
-    // 정렬 후 옵션 추가
-    uniqueWeeks.sort((a, b) => String(a).localeCompare(String(b), undefined, {numeric: true})).forEach(w => {
+function populateFilters() {
+    // 카테고리 추출
+    const uniqueCats = [...new Set(allMasterData.map(item => item.category).filter(Boolean))];
+    uniqueCats.forEach(c => {
         const option = document.createElement("option");
-        option.value = w;
-        option.innerText = String(w).includes("주차") ? w : `${w}주차`;
-        weekFilter.appendChild(option);
+        option.value = c; option.innerText = c;
+        categoryFilter.appendChild(option);
+    });
+
+    // Cycle(학습주기) 추출
+    const uniqueCycles = [...new Set(allMasterData.map(item => item.cycle).filter(Boolean))];
+    uniqueCycles.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c; option.innerText = c;
+        cycleFilter.appendChild(option);
     });
 }
 
 // ====================
-// 퀴즈 섞기 및 준비 (피셔-예이츠 셔플 알고리즘)
+// 초기화 로직 (저장된 진행률 복구)
 // ====================
-function startQuiz() {
-    const selectedWeek = weekFilter.value;
+function initializeFromSavedStateOrStart() {
+    const savedState = loadProgress();
+
+    if (savedState) {
+        // 필터 UI 복구
+        categoryFilter.value = savedState.category || "전체";
+        cycleFilter.value = savedState.cycle || "전체";
+        
+        // 저장된 순서대로 데이터 복구
+        const restoredData = [];
+        savedState.orderIds.forEach(savedId => {
+            const foundItem = allMasterData.find(item => item.id === savedId);
+            if (foundItem) restoredData.push(foundItem);
+        });
+
+        if (restoredData.length > 0) {
+            filteredQuizData = restoredData;
+            currentIndex = savedState.currentIndex < filteredQuizData.length ? savedState.currentIndex : 0;
+            nextQuiz(false); // UI 업데이트
+            return;
+        }
+    }
     
-    // 선택된 주차 데이터만 필터링
+    // 저장된 내역이 없거나 유효하지 않으면 새롭게 시작
+    applyFiltersAndStart(true); 
+}
+
+// 필터 변경 시 감지 (새로운 조합으로 시작)
+function changeFilter() {
+    applyFiltersAndStart(true); // 필터를 바꾸면 기본적으로 랜덤 섞기로 새로 시작
+}
+
+// ====================
+// 퀴즈 준비 및 섞기 (핵심 로직)
+// ====================
+function applyFiltersAndStart(isRandom = true) {
+    const selCat = categoryFilter.value;
+    const selCycle = cycleFilter.value;
+    
     filteredQuizData = allMasterData.filter(item => {
-
-    if (selectedWeek === "전체") return true;
-
-    return String(item.week).trim() === String(selectedWeek).trim();
-
+        const matchCat = selCat === "전체" || item.category === selCat;
+        const matchCyc = selCycle === "전체" || item.cycle === selCycle;
+        return matchCat && matchCyc;
     });
 
     if (filteredQuizData.length === 0) {
-        quizBadge.innerText = "경고";
-        questionEl.innerText = "선택하신 주차에 해당하는 문제가 없습니다.";
+        questionEl.innerText = "해당 조건에 맞는 데이터가 없습니다.";
         showAnswerBtn.style.display = "none";
+        nextQuestionBtn.style.display = "none";
+        progressText.innerText = "0 / 0";
         return;
     }
 
-    // [핵심 조건] 한꺼번에 무작위로 섞기
-    for (let i = filteredQuizData.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [filteredQuizData[i], filteredQuizData[j]] = [filteredQuizData[j], filteredQuizData[i]];
+    if (isRandom) {
+        for (let i = filteredQuizData.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [filteredQuizData[i], filteredQuizData[j]] = [filteredQuizData[j], filteredQuizData[i]];
+        }
+    } else {
+        // 순차 정렬 (ID 기준 오름차순)
+        filteredQuizData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
     }
 
-    currentIndex = 0; // 카운터 초기화
+    currentIndex = 0; 
     nextQuiz();
 }
 
-// 주차 셀렉트 박스 변경 시 감지
-function changeWeekFilter() {
-    startQuiz();
+// 사용자 직접 리셋 버튼 클릭 시
+function restartQuiz(isRandom) {
+    if(confirm(isRandom ? "진행률을 초기화하고 무작위로 섞으시겠습니까?" : "진행률을 초기화하고 1번부터 순서대로 시작하시겠습니까?")) {
+        applyFiltersAndStart(isRandom);
+    }
 }
 
 // ====================
-// 문제 출제 (중복 없이 순차적 진행)[cite: 2]
+// 문제 출제
 // ====================
-function nextQuiz() {
-    // 모든 문제를 다 돌았을 경우 다시 셔플하여 순환시킴
+function nextQuiz(isAdvancing = true) {
+    if (filteredQuizData.length === 0) return;
+
     if (currentIndex >= filteredQuizData.length) {
-        alert("선택한 범위의 모든 문제를 완료했습니다! 새로운 순서로 다시 섞습니다.");
-        startQuiz();
+        alert("선택한 범위의 모든 학습을 완료했습니다! 자동으로 다시 섞어 시작합니다.");
+        applyFiltersAndStart(true);
         return;
     }
 
-    // 순차적으로 문제 배정
     currentQuiz = filteredQuizData[currentIndex];
     
     // UI 업데이트
-    questionEl.innerText = currentQuiz.kr; //[cite: 2]
-    
-    // 초기 노출 상태 세팅[cite: 2]
-    answerEl.classList.remove("reveal"); //[cite: 2]
+    questionEl.innerText = currentQuiz.kr; 
+    answerEl.classList.remove("reveal"); 
     showAnswerBtn.style.display = "block";
     nextQuestionBtn.style.display = "none";
+    
+    // 진행률 텍스트 업데이트
+    progressText.innerText = `진행률: ${currentIndex + 1} / ${filteredQuizData.length}`;
+
+    // 상태 저장
+    saveProgress();
 }
 
 // ====================
@@ -212,24 +244,32 @@ function showAnswer() {
     showAnswerBtn.style.display = "none";
     nextQuestionBtn.style.display = "block";
     
-    // 변경된 부분: 기존 speak(currentQuiz.jp) 대신 playAudio() 호출
     playAudio(); 
-    
-    currentIndex++;
+    currentIndex++; // 다음 문제 인덱스 증가
+    saveProgress(); // 여기서 저장해두면 앱을 껐다 켰을 때 정답을 확인한 문제는 패스됨
 }
 
-// 앱 실행 시 자동 로드
+// ====================
+// 💡 조언 적용: 키보드 단축키 지원 (편의성 극대화)
+// ====================
+document.addEventListener("keydown", (e) => {
+    // 스페이스바(Space) 또는 엔터(Enter)를 누를 경우 진행
+    if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault(); // 화면 스크롤 방지
+        if (showAnswerBtn.style.display !== "none") {
+            showAnswer();
+        } else if (nextQuestionBtn.style.display !== "none") {
+            nextQuiz();
+        }
+    }
+});
+
+// 앱 실행
 loadCSV();
 
 const homeBtn = document.getElementById("homeBtn");
-
 if (homeBtn) {
-
     homeBtn.addEventListener("click", () => {
-
-        location.href =
-        "https://tajunii.github.io/study-home/";
-
+        location.href = "https://tajunii.github.io/study-home/";
     });
-
 }
