@@ -614,3 +614,13 @@ header .custom-select {
         justify-content: center;
     }
 }
+
+/* 2번: 다시 보기 버튼 색상 설정 */
+.eval-btn.retry {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.eval-btn.retry:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
