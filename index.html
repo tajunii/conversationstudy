@@ -10,9 +10,7 @@
 
 <header class="app-header">
     <div class="header-left">
-        <button class="homebtn" id="homeBtn" title="홈으로">
-            🏠
-        </button>
+        <button class="homebtn" id="homeBtn" title="홈으로">🏠</button>
     </div>
     
     <h1>일본어 회화 퀴즈</h1>
@@ -30,10 +28,9 @@
 <main class="container">
     <div id="quizPage" class="page active">
         <div class="quiz-controls-panel">
-            <span id="progressText" class="progress-text">로딩 중...</span>
+            <span id="progressText" class="progress-text" title="현재 조건에서 점수가 0점(완벽)인 문제의 비율입니다.">마스터율 계산 중...</span>
             <div class="action-buttons">
-                <button onclick="restartQuiz(false)" class="control-btn" title="선택한 범위를 1번부터 차례대로 다시 시작합니다">처음부터 (순차)</button>
-                <button onclick="restartQuiz(true)" class="control-btn highlight" title="선택한 범위를 무작위로 섞어서 다시 시작합니다">랜덤 섞기</button>
+                <button onclick="resetScores()" class="control-btn" style="color: #f87171; border-color: rgba(248, 113, 113, 0.4);">기록 초기화</button>
             </div>
         </div>
 
@@ -47,7 +44,17 @@
                 <div id="metaText" class="meta-info">문법 설명 및 팁</div>
             </div>
 
-            <button id="nextQuestionBtn" class="start-btn style-next-btn" style="display:none;" onclick="nextQuiz()">다음 문제 → (Enter)</button>
+            <div id="evaluationButtons" class="evaluation-container" style="display:none;">
+                <button class="eval-btn perfect" onclick="evaluateAnswer('perfect')">
+                    😊 바로 맞춤 <span class="shortcut-key">(1)</span>
+                </button>
+                <button class="eval-btn slow" onclick="evaluateAnswer('slow')">
+                    🤔 늦게 맞춤 <span class="shortcut-key">(2)</span>
+                </button>
+                <button class="eval-btn wrong" onclick="evaluateAnswer('wrong')">
+                    ❌ 틀림 <span class="shortcut-key">(3)</span>
+                </button>
+            </div>
         </div>
     </div>
 </main>

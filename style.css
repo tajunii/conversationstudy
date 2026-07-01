@@ -529,3 +529,88 @@ header .custom-select {
         align-items: flex-start;
     }
 }
+
+/* =========================================
+   평가 버튼 (오답 노트 시스템 UI)
+========================================= */
+.evaluation-container {
+    display: none; /* js에서 flex로 변경됨 */
+    gap: 15px;
+    width: 100%;
+    max-width: 800px;
+    margin-top: 25px;
+    justify-content: space-between;
+}
+
+.eval-btn {
+    flex: 1;
+    padding: 20px 10px;
+    border-radius: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-speed) ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.eval-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0, 0.4);
+}
+
+.eval-btn:active {
+    transform: translateY(0);
+}
+
+/* 1번: 바로 맞춤 */
+.eval-btn.perfect {
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.4);
+}
+.eval-btn.perfect:hover {
+    background: rgba(52, 211, 153, 0.25);
+}
+
+/* 2번: 늦게 맞춤 */
+.eval-btn.slow {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.4);
+}
+.eval-btn.slow:hover {
+    background: rgba(251, 191, 36, 0.25);
+}
+
+/* 3번: 틀림 */
+.eval-btn.wrong {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.eval-btn.wrong:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.shortcut-key {
+    font-size: 14px;
+    opacity: 0.6;
+    font-weight: 400;
+}
+
+/* 모바일 화면 대응 */
+@media (max-width: 600px) {
+    .evaluation-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .eval-btn {
+        padding: 15px;
+        flex-direction: row;
+        justify-content: center;
+    }
+}

@@ -1,10 +1,8 @@
-// ====================
-// 전역 변수
-// ====================
 let allMasterData = []; 
 let filteredQuizData = []; 
-let currentIndex = 0;      
-let currentQuiz = null;    
+let currentQuiz = null;
+let lastQuestionId = null; // 연속 출제 방지용
+let userScores = {};       // { "문제id": score } 저장용
 
 // ====================
 // DOM 요소
@@ -16,59 +14,63 @@ const answerEl = document.getElementById("answer");
 const jpTextEl = document.getElementById("jpText"); 
 const metaTextEl = document.getElementById("metaText"); 
 const showAnswerBtn = document.getElementById("showAnswerBtn"); 
-const nextQuestionBtn = document.getElementById("nextQuestionBtn");
-const progressText = document.getElementById("progressText"); // 신규
+const evaluationButtons = document.getElementById("evaluationButtons");
+const progressText = document.getElementById("progressText");
 
 // ====================
-// 로컬 스토리지 (진행률 저장)
+// 스코어 로컬 스토리지 관리
 // ====================
-function saveProgress() {
-    if (filteredQuizData.length === 0) return;
-    
-    const state = {
-        category: categoryFilter.value,
-        cycle: cycleFilter.value,
-        orderIds: filteredQuizData.map(item => item.id), // 현재 섞여있는 문제 ID 순서 저장
-        currentIndex: currentIndex
-    };
-    localStorage.setItem("quizProgressState", JSON.stringify(state));
+function loadScores() {
+    const saved = localStorage.getItem("quizScoresData");
+    if (saved) {
+        userScores = JSON.parse(saved);
+    } else {
+        userScores = {};
+    }
 }
 
-function loadProgress() {
-    const saved = localStorage.getItem("quizProgressState");
-    if (saved) return JSON.parse(saved);
-    return null;
+function saveScores() {
+    localStorage.setItem("quizScoresData", JSON.stringify(userScores));
+}
+
+function getScore(id) {
+    return userScores[id] || 0; // 저장된 값이 없으면 기본값 0
+}
+
+function setScore(id, score) {
+    userScores[id] = Math.max(0, score); // 최소 0 유지
+    saveScores();
+}
+
+function resetScores() {
+    if(confirm("모든 학습 기록(점수)을 0으로 초기화하시겠습니까?")) {
+        userScores = {};
+        saveScores();
+        alert("초기화 되었습니다!");
+        applyFiltersAndStart();
+    }
 }
 
 // ====================
-// GitHub 오디오 파일 재생
+// 오디오 재생
 // ====================
 let currentAudio = null; 
-
 function playAudio() {
-    if (!currentQuiz) return;
-
+    if (!currentQuiz || !currentQuiz.audio) return;
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
     }
-
-    const fileName = currentQuiz.audio;
-    if (!fileName) return;
-
-    const audioUrl = `https://raw.githubusercontent.com/tajunii/conversationstudy/main/audio/${fileName}`;
+    const audioUrl = `https://raw.githubusercontent.com/tajunii/conversationstudy/main/audio/${currentQuiz.audio}`;
     currentAudio = new Audio(audioUrl);
-    
-    currentAudio.play().catch(error => console.error("음성 파일 재생 실패:", error));
+    currentAudio.play().catch(e => console.error("음성 재생 실패:", e));
 }
 
 // ====================
-// CSV 파싱 규칙
+// CSV 파싱 및 로드
 // ====================
 function parseCSVLine(line) {
-    let result = [];
-    let current = "";
-    let inQuotes = false;
+    let result = [], current = "", inQuotes = false;
     for (let i = 0; i < line.length; i++) {
         const c = line[i];
         if (c === '"') inQuotes = !inQuotes;
@@ -79,18 +81,13 @@ function parseCSVLine(line) {
     return result.map(v => v.trim());
 }
 
-// ====================
-// CSV 데이터 로드
-// ====================
 async function loadCSV(){ 
     try {
         const csvURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTUWrzsscnZ3sHRvSenqLY4o1c-mkvZLYV9GDTdhjvwkyBI7AYjkIRGFKX3Qjdftb7NL5m6HGnAYwS/pub?gid=619535186&single=true&output=csv"; 
         const res = await fetch(csvURL); 
         const text = await res.text(); 
-        
         const cleanText = text.replace(/^\uFEFF/, '');
         const rows = cleanText.split(/\r?\n/).filter(line => line.trim() !== "");
-        
         const headers = parseCSVLine(rows[0]).map(v => v.replace(/^\uFEFF/, "").toLowerCase().trim());
         
         allMasterData = rows.slice(1).map((line, index) => { 
@@ -101,73 +98,33 @@ async function loadCSV(){
             return obj;
         }).filter(item => item.jp && item.kr);
         
+        loadScores(); // 학습 기록 불러오기
         populateFilters();
-        initializeFromSavedStateOrStart(); 
+        applyFiltersAndStart(); 
     } catch (e) {
-        questionEl.innerText = "데이터를 불러오는 데 실패했습니다.";
+        questionEl.innerText = "데이터 로드 실패";
     }
 }
 
-// ====================
-// 다중 필터 생성 (카테고리 & 학습주기)
-// ====================
 function populateFilters() {
-    // 카테고리 추출
     const uniqueCats = [...new Set(allMasterData.map(item => item.category).filter(Boolean))];
     uniqueCats.forEach(c => {
-        const option = document.createElement("option");
-        option.value = c; option.innerText = c;
-        categoryFilter.appendChild(option);
+        const opt = document.createElement("option"); opt.value = c; opt.innerText = c;
+        categoryFilter.appendChild(opt);
     });
-
-    // Cycle(학습주기) 추출
     const uniqueCycles = [...new Set(allMasterData.map(item => item.cycle).filter(Boolean))];
     uniqueCycles.forEach(c => {
-        const option = document.createElement("option");
-        option.value = c; option.innerText = c;
-        cycleFilter.appendChild(option);
+        const opt = document.createElement("option"); opt.value = c; opt.innerText = c;
+        cycleFilter.appendChild(opt);
     });
 }
 
-// ====================
-// 초기화 로직 (저장된 진행률 복구)
-// ====================
-function initializeFromSavedStateOrStart() {
-    const savedState = loadProgress();
-
-    if (savedState) {
-        // 필터 UI 복구
-        categoryFilter.value = savedState.category || "전체";
-        cycleFilter.value = savedState.cycle || "전체";
-        
-        // 저장된 순서대로 데이터 복구
-        const restoredData = [];
-        savedState.orderIds.forEach(savedId => {
-            const foundItem = allMasterData.find(item => item.id === savedId);
-            if (foundItem) restoredData.push(foundItem);
-        });
-
-        if (restoredData.length > 0) {
-            filteredQuizData = restoredData;
-            currentIndex = savedState.currentIndex < filteredQuizData.length ? savedState.currentIndex : 0;
-            nextQuiz(false); // UI 업데이트
-            return;
-        }
-    }
-    
-    // 저장된 내역이 없거나 유효하지 않으면 새롭게 시작
-    applyFiltersAndStart(true); 
-}
-
-// 필터 변경 시 감지 (새로운 조합으로 시작)
-function changeFilter() {
-    applyFiltersAndStart(true); // 필터를 바꾸면 기본적으로 랜덤 섞기로 새로 시작
-}
+function changeFilter() { applyFiltersAndStart(); }
 
 // ====================
-// 퀴즈 준비 및 섞기 (핵심 로직)
+// 출제 로직 (가중치 랜덤 추첨 알고리즘)
 // ====================
-function applyFiltersAndStart(isRandom = true) {
+function applyFiltersAndStart() {
     const selCat = categoryFilter.value;
     const selCycle = cycleFilter.value;
     
@@ -180,96 +137,111 @@ function applyFiltersAndStart(isRandom = true) {
     if (filteredQuizData.length === 0) {
         questionEl.innerText = "해당 조건에 맞는 데이터가 없습니다.";
         showAnswerBtn.style.display = "none";
-        nextQuestionBtn.style.display = "none";
+        evaluationButtons.style.display = "none";
         progressText.innerText = "0 / 0";
         return;
     }
-
-    if (isRandom) {
-        for (let i = filteredQuizData.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [filteredQuizData[i], filteredQuizData[j]] = [filteredQuizData[j], filteredQuizData[i]];
-        }
-    } else {
-        // 순차 정렬 (ID 기준 오름차순)
-        filteredQuizData.sort((a, b) => parseInt(a.id) - parseInt(b.id));
-    }
-
-    currentIndex = 0; 
     nextQuiz();
 }
 
-// 사용자 직접 리셋 버튼 클릭 시
-function restartQuiz(isRandom) {
-    if(confirm(isRandom ? "진행률을 초기화하고 무작위로 섞으시겠습니까?" : "진행률을 초기화하고 1번부터 순서대로 시작하시겠습니까?")) {
-        applyFiltersAndStart(isRandom);
-    }
-}
+// 다음 문제 가중치 추첨
+function nextQuiz() {
+    updateMasteryRate();
 
-// ====================
-// 문제 출제
-// ====================
-function nextQuiz(isAdvancing = true) {
-    if (filteredQuizData.length === 0) return;
-
-    if (currentIndex >= filteredQuizData.length) {
-        alert("선택한 범위의 모든 학습을 완료했습니다! 자동으로 다시 섞어 시작합니다.");
-        applyFiltersAndStart(true);
-        return;
+    let pool = filteredQuizData;
+    
+    // 연속 출제 방지 (문제가 2개 이상일 때만 방지 적용)
+    if (pool.length > 1 && lastQuestionId) {
+        pool = pool.filter(item => item.id !== lastQuestionId);
     }
 
-    currentQuiz = filteredQuizData[currentIndex];
+    // 가중치(Weight) 계산: 점수(score) + 1, 단 점수가 5 이상이면 최대 가중치 6
+    let totalWeight = 0;
+    const weightedPool = pool.map(item => {
+        const score = getScore(item.id);
+        const weight = score >= 5 ? 6 : score + 1;
+        totalWeight += weight;
+        return { item, weight };
+    });
+
+    // 룰렛 추첨 (Random 값에서 weight를 빼가며 선택)
+    let random = Math.random() * totalWeight;
+    let selectedItem = weightedPool[weightedPool.length - 1].item; // 기본값 (안전장치)
+    
+    for (let i = 0; i < weightedPool.length; i++) {
+        random -= weightedPool[i].weight;
+        if (random <= 0) {
+            selectedItem = weightedPool[i].item;
+            break;
+        }
+    }
+
+    currentQuiz = selectedItem;
+    lastQuestionId = currentQuiz.id;
     
     // UI 업데이트
     questionEl.innerText = currentQuiz.kr; 
     answerEl.classList.remove("reveal"); 
     showAnswerBtn.style.display = "block";
-    nextQuestionBtn.style.display = "none";
-    
-    // 진행률 텍스트 업데이트
-    progressText.innerText = `진행률: ${currentIndex + 1} / ${filteredQuizData.length}`;
-
-    // 상태 저장
-    saveProgress();
+    evaluationButtons.style.display = "none"; // 평가 버튼 숨기기
 }
 
-// ====================
-// 정답 보기
-// ====================
+function updateMasteryRate() {
+    if(filteredQuizData.length === 0) return;
+    const masterCount = filteredQuizData.filter(item => getScore(item.id) === 0).length;
+    progressText.innerText = `마스터 🎯: ${masterCount} / ${filteredQuizData.length}`;
+}
+
 function showAnswer() { 
     jpTextEl.innerText = currentQuiz.jp; 
     metaTextEl.innerText = currentQuiz.meta ? `💡 Tip: ${currentQuiz.meta}` : ""; 
-    
     answerEl.classList.add("reveal"); 
     showAnswerBtn.style.display = "none";
-    nextQuestionBtn.style.display = "block";
-    
+    evaluationButtons.style.display = "flex"; // 평가 버튼 보이기
     playAudio(); 
-    currentIndex++; // 다음 문제 인덱스 증가
-    saveProgress(); // 여기서 저장해두면 앱을 껐다 켰을 때 정답을 확인한 문제는 패스됨
 }
 
 // ====================
-// 💡 조언 적용: 키보드 단축키 지원 (편의성 극대화)
+// 평가 및 점수 업데이트
+// ====================
+function evaluateAnswer(type) {
+    let currentScore = getScore(currentQuiz.id);
+    
+    if (type === 'perfect') {
+        currentScore -= 2;
+    } else if (type === 'slow') {
+        currentScore += 1;
+    } else if (type === 'wrong') {
+        currentScore += 3;
+    }
+    
+    setScore(currentQuiz.id, currentScore);
+    nextQuiz(); // 바로 다음 문제로 이동
+}
+
+// ====================
+// 단축키 지원 (편의성 극대화)
 // ====================
 document.addEventListener("keydown", (e) => {
-    // 스페이스바(Space) 또는 엔터(Enter)를 누를 경우 진행
+    // 입력창 등에 포커스 되어 있을 땐 무시
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
     if (e.code === "Space" || e.code === "Enter") {
-        e.preventDefault(); // 화면 스크롤 방지
+        e.preventDefault();
         if (showAnswerBtn.style.display !== "none") {
             showAnswer();
-        } else if (nextQuestionBtn.style.display !== "none") {
-            nextQuiz();
+        }
+    } else if (evaluationButtons.style.display !== "none") {
+        // 정답이 표시되어 평가 버튼이 활성화된 상태일 때만 숫자 단축키 작동
+        if (e.code === "Digit1" || e.code === "Numpad1") {
+            evaluateAnswer('perfect');
+        } else if (e.code === "Digit2" || e.code === "Numpad2") {
+            evaluateAnswer('slow');
+        } else if (e.code === "Digit3" || e.code === "Numpad3") {
+            evaluateAnswer('wrong');
         }
     }
 });
 
-// 앱 실행
 loadCSV();
-
-const homeBtn = document.getElementById("homeBtn");
-if (homeBtn) {
-    homeBtn.addEventListener("click", () => {
-        location.href = "https://tajunii.github.io/study-home/";
-    });
-}
+document.getElementById("homeBtn")?.addEventListener("click", () => location.href = "https://tajunii.github.io/study-home/");
