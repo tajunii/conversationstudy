@@ -188,7 +188,10 @@ function nextQuiz() {
 
 function updateMasteryRate() {
     if(filteredQuizData.length === 0) return;
-    const masterCount = filteredQuizData.filter(item => getScore(item.id) === 0).length;
+    // '풀어본 기록이 있고(userScores에 존재)', '현재 점수가 0'인 문제만 마스터로 인정
+    const masterCount = filteredQuizData.filter(item =>
+        userScores[item.id] !== undefined && userScores[item.id] === 0
+    ).length;
     progressText.innerText = `마스터 🎯: ${masterCount} / ${filteredQuizData.length}`;
 }
 
